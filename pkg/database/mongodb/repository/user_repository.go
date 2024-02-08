@@ -1,45 +1,38 @@
 package repository
 
 import (
-	// "go.mongodb.org/mongo-driver/mongo"
 	"context"
 	"log"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
 	"org.com/org/pkg/database/mongodb"
-
 	"org.com/org/pkg/database/mongodb/models"
 )
 
-// "go.mongodb.org/mongo-driver/bson"
-
-// // GetUserByID retrieves a user by ID from the database.
-// func GetUserByID(id string) (models.User, error) {
-
-// 	// Implementation using MongoDB driver to find a user by ID
-// }
-
 // CreateUser creates a new user in the database.
-func CreateUser(user models.User) (string, error) {
-	// Implementation using MongoDB driver to insert a new user
+func CreateUser(user models.User) error {
 	collection := mongodb.GetUsersCollection()
+
 	// Inserting a new user document into the collection
-	result, err := collection.InsertOne(context.TODO(), user)
+	_, err := collection.InsertOne(context.TODO(), user)
 	if err != nil {
 		log.Printf("Error creating user: %v\n", err)
-		return "", err
+		return err
 	}
-	// Extracting the created document ID and returning it
-	createdID := result.InsertedID.(primitive.ObjectID).Hex()
-	return createdID, nil
+
+	return nil
 }
 
-// // UpdateUser updates a user by ID in the database.
-// func UpdateUser(id string, updatedUser models.User) error {
-// 	// Implementation using MongoDB driver to update a user
-// }
+// GetUserByEmail retrieves a user by email from the database.
+func GetUserByEmail(email string) (*models.User, error) {
+	collection := mongodb.GetUsersCollection()
 
-// // DeleteUser deletes a user by ID from the database.
-// func DeleteUser(id string) error {
-// 	// Implementation using MongoDB driver to delete a user
-// }
+	filter := bson.M{"email": email}
+	var user models.User
+	err := collection.FindOne(context.Background(), filter).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

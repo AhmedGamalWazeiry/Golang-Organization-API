@@ -6,3 +6,9 @@ type User struct {
 	Email    string `json:"email" bson:"email"  binding:"required"`
 	Password string `json:"password" bson:"password"  binding:"required"`
 }
+
+// LoginRequest represents the model for the login request.
+type UserLoginRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}

@@ -1,55 +1,66 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
 	"org.com/org/pkg/controllers"
 	"org.com/org/pkg/database/mongodb/models"
 )
 
-// GetUserByID handles the GET request for retrieving a user by ID.
-func GetUserByID(c *gin.Context) {
-	userID := c.Param("id") // Get the user ID from the URL parameter
-	fmt.Println("User IDdsdsadsaaaaaaaaaaaaaaaaaa:", userID)
-	// For testing purposes, create a dummy user with the provided ID
-	dummyUser := models.User{
-		
-		Name:     "Dummy User",
-		Email:    "dummy@example.com",
-		Password: "dummyPassword",
-	}
-
-	c.JSON(http.StatusOK, dummyUser)
-}
-
-// CreateUser handles the POST request for creating a new user.
-func CreateUser(c *gin.Context) {
-	fmt.Println("User IDdsdsadsaaaaaaaaaaaaaaaaaa3:")
+// Register handles the POST request for creating a new user.
+func Register(c *gin.Context) {
 	var user models.User
-	
+
+	// Bind JSON data to the 'user' variable
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println("User IDdsdsadsaaaaaaaaaaaaaaaaaa1:")
-	createdID, err := controllers.CreateUser(user)
-	fmt.Println("User IDdsdsadsaaaaaaaaaaaaaaaaaa2:")
+
+	// Create user using controller
+	 err := controllers.CreateUser(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"id": createdID})
+	c.JSON(http.StatusCreated, gin.H{"message": "Congratulations! You've successfully signed up and joined our community."})
 }
 
-// UpdateUser handles the PUT request for updating a user by ID.
-func UpdateUser(c *gin.Context) {
-	// Implementation similar to GetUsers
+// Login handles the POST request for user authentication.
+func Login(c *gin.Context) {
+	var user models.UserLoginRequest
+
+	// Bind JSON data to the 'user' variable
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Authenticate user using controller
+	response, err := controllers.AuthenticateUser(user)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate access and refresh tokens
+	accessToken, refreshToken, err := controllers.GenerateTokenPair(*response)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Respond with tokens and success message
+	c.JSON(http.StatusOK, gin.H{
+		"message":         "Login successful",
+		"access_token":    accessToken,
+		"refresh_token":   refreshToken,
+	})
 }
 
-// DeleteUser handles the DELETE request for deleting a user by ID.
-func DeleteUser(c *gin.Context) {
-	// Implementation similar to GetUsers
+// Logout handles the POST request for logging out a user.
+func Logout(c *gin.Context) {
+	// Clear cookies on logout
+	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
 }
