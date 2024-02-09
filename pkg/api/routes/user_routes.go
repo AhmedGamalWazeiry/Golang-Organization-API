@@ -12,7 +12,9 @@ func InitUserRoutes(router *gin.Engine) {
 	{
 		userGroup.POST("/signup", handlers.Register)
 		userGroup.POST("/signin", handlers.Login)
-		userGroup.POST("/signout", handlers.Logout)
-		userGroup.GET("/test",middleware.Auth(), handlers.Logout)
+		userGroup.POST("/revoke-refresh-token",middleware.Auth(), handlers.RevokeRefreshToken)
+		userGroup.POST("/refresh-token", handlers.RefreshToken)
+		userGroup.POST("/test",middleware.Auth(), handlers.Test)
+		
 	}
 }

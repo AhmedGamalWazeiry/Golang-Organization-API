@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 
 	"org.com/org/pkg/database/mongodb/models"
 	"org.com/org/pkg/database/mongodb/repository"
@@ -9,7 +10,7 @@ import (
 	"org.com/org/pkg/utils"
 )
 const (
-	accessTokenExpireMinutes  = 5
+	accessTokenExpireMinutes  = 10
 	refreshTokenExpireMinutes = 20
 )
 
@@ -32,13 +33,10 @@ func CreateUser(user models.User) error {
 func AuthenticateUser(userRequest models.UserLoginRequest) (*models.User, error) {
 	// Check if the email exists
 	user, err := repository.GetUserByEmail(userRequest.Email)
-	if err != nil {
-		return nil, err
-	}
-	if user == nil {
+
+	if err != nil || user == nil {
 		return nil, errors.New("invalid credentials")
 	}
-
 	// Compare the hashed password with the provided password
 	if err := utils.ComparePasswordHash(user.Password, userRequest.Password); err != nil {
 		return nil, errors.New("invalid credentials")
@@ -55,6 +53,32 @@ func GenerateTokenPair(user models.User) (string,string, error) {
 		return "","", err
 	}
 	refreshToken,err := utils.GenerateToken(user,refreshTokenExpireMinutes)
+	if err != nil {
+		return "","", err
+	}
+	
+
+	return accessToken,refreshToken, nil
+}
+
+// GenerateTokenPair generates a new access and refresh token pair.
+func GenerateTokenPairByRefreshToken(token string) (string,string, error) {
+	claims, err := utils.VerifyToken(token)
+	if err != nil {
+		return "","",  errors.New("invalid refresh token")
+	}
+	fmt.Println(claims.UserID)
+	user,err := repository.GetUserByID(claims.UserID)
+
+	if err != nil {
+		return "","",err
+	}
+
+	accessToken,err := utils.GenerateToken(*user,accessTokenExpireMinutes)
+	if err != nil {
+		return "","", err
+	}
+	refreshToken,err := utils.GenerateToken(*user,refreshTokenExpireMinutes)
 	if err != nil {
 		return "","", err
 	}

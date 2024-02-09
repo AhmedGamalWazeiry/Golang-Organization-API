@@ -6,4 +6,5 @@ import "github.com/dgrijalva/jwt-go"
 type TokenClaims struct {
 	jwt.StandardClaims
 	UserID string `json:"user_id"`
+	JTI    string `json:"jti"`
 }

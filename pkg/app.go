@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"org.com/org/pkg/api/routes"
 	"org.com/org/pkg/database/mongodb"
+	"org.com/org/pkg/utils"
 )
 
 // Application represents the application.
@@ -19,6 +20,8 @@ func NewApp() *Application {
 
 	// Initialize database
 	mongodb.InitDB()
+
+	utils.InitRedis()
 
 	// Initialize user routes
 	routes.InitUserRoutes(app.Router)

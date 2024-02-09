@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"org.com/org/pkg/database/mongodb"
 	"org.com/org/pkg/database/mongodb/models"
 )
@@ -35,4 +37,35 @@ func GetUserByEmail(email string) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func IsEmailExists(email string) (bool, error) {
+    collection := mongodb.GetUsersCollection()
+
+    filter := bson.M{"email": email}
+    count, err := collection.CountDocuments(context.Background(), filter)
+    if err != nil {
+        return false, err
+    }
+
+    return count > 0, nil
+}
+
+// GetUserByID retrieves a user by ID from the database.
+func GetUserByID(userID string) (*models.User, error) {
+    collection := mongodb.GetUsersCollection()
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, errors.New("invalid user ID format")
+	}
+
+    filter := bson.M{"_id": objectID}
+    var user models.User
+    err = collection.FindOne(context.Background(), filter).Decode(&user)
+    if err != nil {
+        return nil, err
+    }
+
+    return &user, nil
 }
