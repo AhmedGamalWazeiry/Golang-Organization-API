@@ -35,6 +35,7 @@ func Auth() gin.HandlerFunc {
 
 		// Set user ID from claims for further use in the handlers
 		c.Set("user_id", claims.UserID)
+		c.Set("user_email", claims.Subject)
 
 		// Continue with the next middleware/handler
 		c.Next()

@@ -39,6 +39,8 @@ func InitDB() {
 
 	// Create "users" collection if it doesn't exist
 	createUsersCollection(ctx)
+	
+	createOrganizationsCollection(ctx)
 }
 
 // SetMongoClient sets the MongoDB client.
@@ -52,6 +54,9 @@ func GetMongoClient() *mongo.Client {
 }
 func GetUsersCollection() *mongo.Collection {
 	return client.Database(dbName).Collection("users")
+}
+func GetOrganizationsCollection() *mongo.Collection {
+	return client.Database(dbName).Collection("organizations")
 }
 
 func createUsersCollection(ctx context.Context) {
@@ -113,3 +118,32 @@ func createUsersCollection(ctx context.Context) {
 		log.Println("The 'users' collection already exists.")
 	}
 }
+
+func createOrganizationsCollection(ctx context.Context) {
+	// Get the MongoDB database
+	db := client.Database(dbName)
+
+	// Check if the "organizations" collection already exists
+	collections, err := db.ListCollectionNames(ctx, bson.M{"name": "organizations"})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// If the "organizations" collection doesn't exist, create it
+	if len(collections) == 0 {
+		// Specify options for the "organizations" collection
+		collectionOptions := options.CreateCollection()
+
+		// Create the "organizations" collection with options
+		err := db.CreateCollection(ctx, "organizations", collectionOptions)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("Created 'organizations' collection.")
+	} else {
+		log.Println("The 'organizations' collection already exists.")
+	}
+}
+
+

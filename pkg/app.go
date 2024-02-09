@@ -25,6 +25,7 @@ func NewApp() *Application {
 
 	// Initialize user routes
 	routes.InitUserRoutes(app.Router)
+	routes.InitOrganizationRoutes(app.Router)
 
 	return app
 }

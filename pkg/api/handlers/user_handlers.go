@@ -11,7 +11,7 @@ import (
 
 // Register handles the POST request for creating a new user.
 func Register(c *gin.Context) {
-	var user models.User
+	var user models.UserRegister
 
 	// Bind JSON data to the 'user' variable
 	if err := c.ShouldBindJSON(&user); err != nil {

@@ -15,3 +15,8 @@ type UserLoginRequest struct {
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
+type UserRegister struct {
+	Name     string `json:"name" bson:"name" binding:"required"`
+	Email    string `json:"email" bson:"email"  binding:"required"`
+	Password string `json:"password" bson:"password"  binding:"required"`
+}

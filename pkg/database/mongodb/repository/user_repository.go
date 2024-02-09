@@ -12,7 +12,7 @@ import (
 )
 
 // CreateUser creates a new user in the database.
-func CreateUser(user models.User) error {
+func CreateUser(user models.UserRegister) error {
 	collection := mongodb.GetUsersCollection()
 
 	// Inserting a new user document into the collection

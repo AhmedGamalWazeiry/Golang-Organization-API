@@ -10,13 +10,13 @@ import (
 	"org.com/org/pkg/utils"
 )
 const (
-	accessTokenExpireMinutes  = 10
-	refreshTokenExpireMinutes = 20
+	accessTokenExpireMinutes  = 100
+	refreshTokenExpireMinutes = 200
 )
 
 var signingKey = []byte("your-secret-key")
 
-func CreateUser(user models.User) error {
+func CreateUser(user models.UserRegister) error {
 	// Implementation using repository function to create a new user
 
 	hashedPassword, err := utils.HashPassword(user.Password)
