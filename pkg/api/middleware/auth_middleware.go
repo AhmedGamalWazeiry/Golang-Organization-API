@@ -20,7 +20,7 @@ func Auth() gin.HandlerFunc {
 		// Verify the token
 		claims, err := utils.VerifyToken(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}

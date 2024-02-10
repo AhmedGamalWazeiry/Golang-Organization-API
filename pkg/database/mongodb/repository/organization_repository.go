@@ -3,48 +3,41 @@ package repository
 import (
 	"context"
 	"errors"
-	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"org.com/org/pkg/database/mongodb"
-	"org.com/org/pkg/database/mongodb/models" // replace with the actual package name
+	"org.com/org/pkg/database/mongodb/models"
 )
 
+// CreateOrganization inserts a new organization document into the collection.
 func CreateOrganization(organization models.Organization) (string, error) {
     collection := mongodb.GetOrganizationsCollection()
 
-    // Inserting a new organization document into the collection
     result, err := collection.InsertOne(context.TODO(), organization)
     if err != nil {
-        log.Printf("Error creating organization: %v\n", err)
         return "", err
     }
 
-    // Retrieve the generated ID from the InsertOneResult
     insertedID, ok := result.InsertedID.(primitive.ObjectID)
     if !ok {
-        log.Printf("Error converting InsertedID to ObjectID")
-        return "", errors.New("error converting InsertedID to ObjectID")
+        return "", errors.New("Error processing request")
     }
 
-    // Convert ObjectID to string
-    idString := insertedID.Hex()
-
-    return idString, nil
+    return insertedID.Hex(), nil
 }
 
-
-
+// GetOrganizationByID retrieves an organization document by its ID.
 func GetOrganizationByID(organizationID string) (*models.Organization, error) {
     collection := mongodb.GetOrganizationsCollection()
 
-	objectID, err := primitive.ObjectIDFromHex(organizationID)
-	if err != nil {
-		return nil, errors.New("invalid organization ID format")
-	}
+    objectID, err := primitive.ObjectIDFromHex(organizationID)
+    if err != nil {
+        return nil, errors.New("Invalid organization ID format")
+    }
 
     filter := bson.M{"_id": objectID}
+
     var organization models.Organization
     err = collection.FindOne(context.Background(), filter).Decode(&organization)
     if err != nil {
@@ -54,47 +47,40 @@ func GetOrganizationByID(organizationID string) (*models.Organization, error) {
     return &organization, nil
 }
 
-// GetAllOrganizations retrieves all organizations from the MongoDB collection.
+// GetAllOrganizations retrieves all organization documents from the collection.
 func GetAllOrganizations() ([]models.Organization, error) {
     collection := mongodb.GetOrganizationsCollection()
 
-    // Define an empty filter to get all documents in the collection
     filter := bson.M{}
 
-    // Find all organizations matching the filter
     cursor, err := collection.Find(context.Background(), filter)
     if err != nil {
-        log.Printf("Error retrieving organizations: %v\n", err)
         return nil, err
     }
     defer cursor.Close(context.Background())
 
-    // Iterate through the cursor and decode documents into an array of organizations
     var organizations []models.Organization
     for cursor.Next(context.Background()) {
         var organization models.Organization
         if err := cursor.Decode(&organization); err != nil {
-            log.Printf("Error decoding organization: %v\n", err)
             return nil, err
         }
         organizations = append(organizations, organization)
     }
 
     if err := cursor.Err(); err != nil {
-        log.Printf("Error iterating over organizations: %v\n", err)
         return nil, err
     }
 
     return organizations, nil
 }
 
+// UpdateOrganization updates an organization document in the collection.
 func UpdateOrganization(organization models.Organization) error {
     collection := mongodb.GetOrganizationsCollection()
 
-    // Create a filter for the organization to update
     filter := bson.M{"_id": organization.ID}
 
-    // Create an update that sets the new organization data
     update := bson.M{
         "$set": bson.M{
             "name": organization.Name,
@@ -103,7 +89,6 @@ func UpdateOrganization(organization models.Organization) error {
         },
     }
 
-    // Update the organization in the collection
     _, err := collection.UpdateOne(context.Background(), filter, update)
     if err != nil {
         return err
@@ -112,42 +97,43 @@ func UpdateOrganization(organization models.Organization) error {
     return nil
 }
 
+// DeleteOrganization deletes an organization document from the collection.
 func DeleteOrganization(orgID string) error {
     collection := mongodb.GetOrganizationsCollection()
 
-    // Convert the organizationID to an ObjectID
     objectID, err := primitive.ObjectIDFromHex(orgID)
     if err != nil {
-        return errors.New("invalid organization ID format")
+        return errors.New("Invalid organization ID format")
     }
 
-    // Delete the organization from the collection
     _, err = collection.DeleteOne(context.Background(), bson.M{"_id": objectID})
     if err != nil {
         return err
     }
 
+    
     return nil
 }
 
+
+// AddUserToOrganization adds a user to an organization as a member.
 func AddUserToOrganization(orgID string, user models.User) error {
     collection := mongodb.GetOrganizationsCollection()
 
-    // Convert the organizationID to an ObjectID
     objectID, err := primitive.ObjectIDFromHex(orgID)
     if err != nil {
-        return errors.New("invalid organization ID format")
+        return errors.New("The organization ID you provided doesn't seem to be correct. Please check and try again.")
     }
 
-    // Create a new member with the user name, email, and default access level
     newMember := models.Member{
         Name: user.Name,
         Email: user.Email,
-        AccessLevel: "member",  // Set the default access level for new members
+        AccessLevel: "member", 
     }
 
-    // Add the new member to the organization in the collection
-    _, err = collection.UpdateOne(context.Background(), bson.M{"_id": objectID}, bson.M{"$push": bson.M{"organization_members": newMember}})
+    update := bson.M{"$push": bson.M{"organization_members": newMember}}
+
+    _, err = collection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
     if err != nil {
         return err
     }

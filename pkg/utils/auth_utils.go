@@ -80,7 +80,7 @@ func VerifyToken(tokenString string) (*models.TokenClaims, error) {
 	token, err := ParseToken(tokenString)
 	
 	if err != nil {
-		return nil, err
+		return nil, errors.New("token validation failed")
 	}
     
 	claims, ok := token.Claims.(*models.TokenClaims)
@@ -124,17 +124,6 @@ func  BlacklistToken(token string) error {
 
 	ctx := context.Background()
 	key := fmt.Sprintf("blacklist:%s", claims.JTI)
-	keys, err := RedisClient.Keys(context.Background(), "*").Result()
-	if err != nil {
-		fmt.Println("Error:", err)
-		
-	}
-
-	// Print the keys
-	fmt.Println("Keys:")
-	for _, key := range keys {
-		fmt.Println(key)
-	}
 
 	remainingTime := time.Until(time.Unix(claims.ExpiresAt, 0))
 

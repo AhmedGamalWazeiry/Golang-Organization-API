@@ -12,63 +12,45 @@ import (
 // Register handles the POST request for creating a new user.
 func Register(c *gin.Context) {
 	var user models.UserRegister
-
-	// Bind JSON data to the 'user' variable
-	if err := c.ShouldBindJSON(&user); err != nil {
-		errorMessage:= utils.ExtractErrorMessage(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessage})
+	statusCode, errorMessage := utils.BindAndValidate(c, &user)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
 
-	emailValidationMessage := utils.ValidateEmail(user.Email)
-	if emailValidationMessage != "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": emailValidationMessage})
+	// Create user using controller
+	statusCode, err := controllers.CreateUser(user)
+
+	if err != nil {
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 	
-	// Create user using controller
-	err := controllers.CreateUser(user)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, gin.H{"message": "Congratulations! You've successfully signed up and joined our community."})
+	c.JSON(statusCode, gin.H{"message": "Congratulations! You've successfully signed up and joined our community."})
 }
 
-// Login handles the POST request for user authentication.
+// Login handles the POST request for user login.
 func Login(c *gin.Context) {
 	var user models.UserLoginRequest
 
-	// Bind JSON data to the 'user' variable
-	if err := c.ShouldBindJSON(&user); err != nil {
-		errorMessage:= utils.ExtractErrorMessage(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessage})
+	statusCode, errorMessage := utils.BindAndValidate(c, &user)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
 
-	emailValidationMessage := utils.IsValidEmail(user.Email)
-
-	if !emailValidationMessage  {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
-		return
-	}
-
-	// Authenticate user using controller
-	authenticated_user, err := controllers.AuthenticateUser(user)
+	statusCode, authenticated_user, err := controllers.AuthenticateUser(user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(statusCode, err.Error())
 		return
 	}
 
-	// Generate access and refresh tokens
-	accessToken, refreshToken, err := controllers.GenerateTokenPair(*authenticated_user)
+	statusCode, accessToken, refreshToken, err := controllers.GenerateTokenPair(*authenticated_user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Respond with tokens and success message
 	c.JSON(http.StatusOK, gin.H{
 		"message":         "Login successful",
 		"access_token":    accessToken,
@@ -76,41 +58,37 @@ func Login(c *gin.Context) {
 	})
 }
 
-// Logout handles the POST request for logging out a user.
+// RevokeRefreshToken handles the POST request for revoking a refresh token.
 func RevokeRefreshToken(c *gin.Context) {
 	var RefreshTokenRequest models.RefreshTokenRequest
 
-	// Bind JSON data to the 'refreshTokenRequest' variable
-	if err := c.ShouldBindJSON(&RefreshTokenRequest); err != nil {
-		errorMessage:= utils.ExtractErrorMessage(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessage})
+	statusCode, errorMessage := utils.BindAndValidate(c, &RefreshTokenRequest)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
 
-	// Extract refresh token from the request
 	refreshToken:= RefreshTokenRequest.RefreshToken
 	
 	err := utils.BlacklistToken(refreshToken)
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Unable to revoke the refresh token; it appears that the refresh token may be invalid."})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to revoke the refresh token"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Refresh token revoked successfully"})
 }
 
-// RefreshToken handles the POST request for refreshing access tokens.
+// RefreshToken handles the POST request for refreshing a token.
 func RefreshToken(c *gin.Context) {
 	var RefreshTokenRequest models.RefreshTokenRequest
 
-	// Bind JSON data to the 'refreshTokenRequest' variable
-	if err := c.ShouldBindJSON(&RefreshTokenRequest); err != nil {
-		errorMessage:= utils.ExtractErrorMessage(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessage})
+	statusCode, errorMessage := utils.BindAndValidate(c, &RefreshTokenRequest)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
 
-	// Extract refresh token from the request
 	refreshToken:= RefreshTokenRequest.RefreshToken
 
 	ok, err := utils.IsTokenBlacklisted(refreshToken)
@@ -120,33 +98,21 @@ func RefreshToken(c *gin.Context) {
 			return
 		}
     
-	// Validate and refresh the access token using controller
-	accessToken, newRefreshToken, err := controllers.GenerateTokenPairByRefreshToken(refreshToken)
+	statusCode, accessToken, newRefreshToken, err := controllers.GenerateTokenPairByRefreshToken(refreshToken)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(statusCode, gin.H{"error": "Failed to refresh tokens"})
 		return
 	}
 
     err = utils.BlacklistToken(refreshToken)
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Failed to create Refresh Token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to blacklist old refresh token"})
 		return
 	}
-	// Respond with the new tokens and success message
 	c.JSON(http.StatusOK, gin.H{
 		"message":         "Token refreshed successfully",
 		"access_token":    accessToken,
 		"refresh_token":   newRefreshToken,
 	})
-}
-
-
-func Test(c *gin.Context) {
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":         "TEST auth successfully",
-	
-	})
-	return
 }
