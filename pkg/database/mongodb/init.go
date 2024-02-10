@@ -16,12 +16,12 @@ var (
 )
 
 // InitDB initializes the MongoDB database connection.
-func InitDB(dataBaseName string) {
+func InitDB(dataBaseName string,uri string) {
 	dbName = dataBaseName
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
@@ -35,10 +35,8 @@ func InitDB(dataBaseName string) {
 
 	log.Println("Connected to MongoDB!")
 
-	// Set the global client variable for use throughout the application
 	SetMongoClient(client)
 
-	// Create "users" collection if it doesn't exist
 	createUsersCollection(ctx)
 	
 	createOrganizationsCollection(ctx)

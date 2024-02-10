@@ -51,7 +51,7 @@ func GetOrganizationByIDController(orgID string, userEmail string) (int, *models
 	}
 
 	if !isMember {
-		return http.StatusForbidden, nil, errors.New("Forbidden access")
+		return http.StatusForbidden, nil, errors.New("You don't have access to perform this action.")
 	}
 
 	return http.StatusOK, organization, nil
@@ -93,7 +93,7 @@ func UpdateOrganizationController(orgID string, userEmail string, orgView models
 	}
 
 	if !isAdmin  {
-		return http.StatusForbidden, errors.New("Forbidden access")
+		return http.StatusForbidden, errors.New("You don't have access to perform this action.")
 	}
 
 	organization.Name = orgView.Name
@@ -123,7 +123,7 @@ func DeleteOrganizationController(orgID string, userEmail string) (int, error) {
 	}
 
 	if !isAdmin  {
-		return http.StatusForbidden, errors.New("Forbidden access")
+		return http.StatusForbidden, errors.New("You don't have access to perform this action.")
 	}
 
 	err = repository.DeleteOrganization(orgID)
@@ -155,7 +155,7 @@ func InviteUserController(orgID string, userID string, inviteEmail string) (int,
 	}
 
 	if !isAdmin {
-		return http.StatusForbidden, errors.New("Forbidden access")
+		return http.StatusForbidden, errors.New("You don't have access to perform this action.")
 	}
 
 	for _, member := range organization.OrganizationMembers {

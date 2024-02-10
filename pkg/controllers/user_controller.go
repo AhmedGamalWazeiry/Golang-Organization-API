@@ -34,7 +34,7 @@ func CreateUser(user models.UserRegister) (int, error) {
 
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New("Failed to hash password")
+		return http.StatusInternalServerError, errors.New("Failed to create user")
 	}
 	
 	user.Password = hashedPassword

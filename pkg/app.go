@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"org.com/org/pkg/api/routes"
 	"org.com/org/pkg/database/mongodb"
 	"org.com/org/pkg/utils"
@@ -18,8 +19,19 @@ func NewApp() *Application {
 		Router: gin.Default(),
 	}
 
+	viper.SetConfigType("yaml")
+    viper.SetConfigFile("./config/database-config.yaml") 
+	
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic("Failed to read the configuration file")
+	}
+
+	dbName := viper.GetString("mongodb.database")
+	uri := viper.GetString("mongodb.uri")
+
 	// Initialize database
-	mongodb.InitDB("OrgDB")
+	mongodb.InitDB(dbName,uri)
 
 	utils.InitRedis()
 

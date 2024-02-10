@@ -6,7 +6,6 @@ import (
 	"org.com/org/pkg/api/middleware"
 )
 
-// InitUserRoutes initializes user-related routes.
 func InitOrganizationRoutes(router *gin.Engine) {
 	userGroup := router.Group("")
 	{

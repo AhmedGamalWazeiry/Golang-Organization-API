@@ -1,16 +1,29 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
 )
 
 var RedisClient *redis.Client
 
-// InitRedis initializes the Redis client.
 func InitRedis() {
+	viper.SetConfigType("yaml")
+
+
+    viper.SetConfigFile("./config/app-config.yaml") 
+	
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println(err)
+		panic("Failed to read the configuration file")
+	}
+
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // Update with your Redis server address
-		Password: "",                // No password for local Redis server
-		DB:       0,
+		Addr:     viper.GetString("redis.address"),
+		Password: viper.GetString("redis.password"),
+		DB:       viper.GetInt("redis.db"),
 	})
 }

@@ -36,7 +36,7 @@ func setup() {
 	
 	dbName := fmt.Sprintf("test_db_%d", time.Now().UnixNano())
 
-	mongodb.InitDB(dbName)
+	mongodb.InitDB(dbName,"mongodb://localhost:27017")
 
 	utils.InitRedis()
 	
