@@ -38,7 +38,7 @@ func setup() {
 
 	mongodb.InitDB(dbName,"mongodb://localhost:27017")
 
-	utils.InitRedis()
+	utils.InitRedis("localhost:6379","",0)
 	
 	router = gin.Default()
 	routes.InitUserRoutes(router)
