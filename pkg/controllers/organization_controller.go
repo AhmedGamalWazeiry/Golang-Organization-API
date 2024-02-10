@@ -3,55 +3,45 @@ package controllers
 import (
 	"errors"
 	"log"
+	"net/http"
 
 	"org.com/org/pkg/database/mongodb/models"
 	"org.com/org/pkg/database/mongodb/repository"
 )
 
-func InsertOrganizationController(orgView models.OrganizationView, userID string) (string, error) {
-	// Get the user collection
-	
-
-	// Convert the userID to an ObjectID
+func InsertOrganizationController(orgView models.OrganizationView, userID string) (int, string, error) {
 	user,err := repository.GetUserByID(userID)
 	if err != nil {
-		return "", errors.New("Can't find the user with this ID")
+		return http.StatusNotFound, "", errors.New("Can't find the user with this ID")
 	}
 
-	// Create a new member with the user data and admin access level
 	member := models.Member{
 		Name:       user.Name,
 		Email:      user.Email,
 		AccessLevel: "admin",
 	}
 
-	// Create a new organization with the OrganizationView and added member
 	organization := models.Organization{
 		Name:                 orgView.Name,
 		Description:          orgView.Description,
 		OrganizationMembers: []models.Member{member},
 	}
 
-	// Use the existing CreateOrganization function to insert the new organization
 	orgID, err := repository.CreateOrganization(organization)
 	if err != nil {
 		log.Printf("Error creating organization: %v\n", err)
-		return "", err
+		return http.StatusInternalServerError, "", err
 	}
 
-	return orgID, nil
+	return http.StatusCreated, orgID, nil
 }
 
-func GetOrganizationByIDController(orgID string, userEmail string) (*models.Organization, error) {
-	
-
-	// Get the organization object from GetOrganizationByID in the repo
+func GetOrganizationByIDController(orgID string, userEmail string) (int, *models.Organization, error) {
 	organization, err := repository.GetOrganizationByID(orgID)
 	if err != nil {
-		return nil, errors.New("Can't find the organization with this ID")
+		return http.StatusNotFound, nil, errors.New("Can't find the organization with this ID")
 	}
 
-	// Make sure that the user email exists in the members of the organization
 	isMember := false
 	for _, member := range organization.OrganizationMembers {
 		if member.Email == userEmail {
@@ -60,22 +50,19 @@ func GetOrganizationByIDController(orgID string, userEmail string) (*models.Orga
 		}
 	}
 
-	// If the user is not a member in the organization, return an error
 	if !isMember {
-		return nil, errors.New("you are not authorized to access this organization's information")
+		return http.StatusUnauthorized, nil, errors.New("you are not authorized to access this organization's information")
 	}
 
-	return organization, nil
+	return http.StatusOK, organization, nil
 }
 
-func GetAllUserOrganizationsController(userEmail string) ([]models.Organization, error) {
-	// Get all organizations from the repo
+func GetAllUserOrganizationsController(userEmail string) (int, []models.Organization, error) {
 	allOrganizations, err := repository.GetAllOrganizations()
 	if err != nil {
-		return nil,  errors.New("No organizations exist to show.")
+		return http.StatusNotFound, nil, errors.New("No organizations exist to show.")
 	}
 
-	// Filter the organizations to include only those where the user is a member
 	var userOrganizations []models.Organization
 	for _, org := range allOrganizations {
 		for _, member := range org.OrganizationMembers {
@@ -86,20 +73,15 @@ func GetAllUserOrganizationsController(userEmail string) ([]models.Organization,
 		}
 	}
 
-	return userOrganizations, nil
+	return http.StatusOK, userOrganizations, nil
 }
 
-func UpdateOrganizationController(orgID string, userEmail string, orgView models.OrganizationView) error {
-	// Get the user by the userID in the repo
-	
-
-	// Get the organization object from GetOrganizationByID in the repo
+func UpdateOrganizationController(orgID string, userEmail string, orgView models.OrganizationView) (int, error) {
 	organization, err := repository.GetOrganizationByID(orgID)
 	if err != nil {
-		return errors.New("Can't find the organization with this ID")
+		return http.StatusNotFound, errors.New("Can't find the organization with this ID")
 	}
 
-	// Make sure that the user email exists in the members of the organization
 	isMember := false
 	for _, member := range organization.OrganizationMembers {
 		if member.Email == userEmail {
@@ -108,33 +90,27 @@ func UpdateOrganizationController(orgID string, userEmail string, orgView models
 		}
 	}
 
-	// If the user is not a member in the organization, return an error
 	if !isMember {
-		return errors.New("you are not authorized to update this organization's information")
+		return http.StatusUnauthorized, errors.New("you are not authorized to update this organization's information")
 	}
 
-	// Update the organization with the new data
 	organization.Name = orgView.Name
 	organization.Description = orgView.Description
 
-	// Use the existing UpdateOrganization function to update the organization
 	err = repository.UpdateOrganization(*organization)
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 
-	return nil
+	return http.StatusOK, nil
 }
 
-func DeleteOrganizationController(orgID string, userEmail string) error {
-
-	// Get the organization object from GetOrganizationByID in the repo
+func DeleteOrganizationController(orgID string, userEmail string) (int, error) {
 	organization, err := repository.GetOrganizationByID(orgID)
 	if err != nil {
-		return  errors.New("Can't find the organization with this ID")
+		return http.StatusNotFound, errors.New("Can't find the organization with this ID")
 	}
 
-	// Make sure that the user email exists in the members of the organization
 	isMember := false
 	for _, member := range organization.OrganizationMembers {
 		if member.Email == userEmail {
@@ -143,34 +119,29 @@ func DeleteOrganizationController(orgID string, userEmail string) error {
 		}
 	}
 
-	// If the user is not a member in the organization, return an error
 	if !isMember {
-		return errors.New("you are not authorized to delete this organization's information")
+		return http.StatusUnauthorized, errors.New("you are not authorized to delete this organization's information")
 	}
 
-	// Use the existing DeleteOrganization function to delete the organization
 	err = repository.DeleteOrganization(orgID)
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 
-	return nil
+	return http.StatusOK, nil
 }
 
-func InviteUserController(orgID string, userID string, inviteEmail string) error {
-	// Get the user by the userID in the repo
+func InviteUserController(orgID string, userID string, inviteEmail string) (int, error) {
 	user, err := repository.GetUserByID(userID)
 	if err != nil {
-		return err
+		return http.StatusNotFound, err
 	}
 
-	// Get the organization object from GetOrganizationByID in the repo
 	organization, err := repository.GetOrganizationByID(orgID)
 	if err != nil {
-		return err
+		return http.StatusNotFound, err
 	}
 
-	// Make sure that the user email exists in the members of the organization and the access level is admin
 	isAdmin := false
 	for _, member := range organization.OrganizationMembers {
 		if member.Email == user.Email && member.AccessLevel == "admin" {
@@ -179,29 +150,25 @@ func InviteUserController(orgID string, userID string, inviteEmail string) error
 		}
 	}
 
-	// If the user is not an admin in the organization, return an error
 	if !isAdmin {
-		return errors.New("you are not authorized to invite users to this organization")
+		return http.StatusUnauthorized, errors.New("you are not authorized to invite users to this organization")
 	}
 
-	// Check that the user to invite does not exist in the same organization
 	for _, member := range organization.OrganizationMembers {
 		if member.Email == inviteEmail {
-			return errors.New("the user is already a member of this organization")
+			return http.StatusConflict, errors.New("the user is already a member of this organization")
 		}
 	}
 
-	// Get the invited user by the email in the repo
 	inviteUser, err := repository.GetUserByEmail(inviteEmail)
 	if err != nil {
-		return err
+		return http.StatusNotFound, err
 	}
 
-	// Add the invited user to the organization
 	err = repository.AddUserToOrganization(orgID, *inviteUser)
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 
-	return nil
+	return http.StatusOK, nil
 }
