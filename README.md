@@ -1,42 +1,38 @@
-# Golang API Application
-
-This repository houses a Golang-based API application designed for managing organizations. The application includes features such as token management, CRUD operations for organizations, user invitations, and integration with MongoDB using Docker.
-
-## Project Structure
-
-The project structure is designed to assist you in getting started quickly. You can modify it as needed for your specific requirements.
-
-- **cmd/**: Contains the main application file.
-  - **main.go**: The entry point of the application.
-
-- **pkg/**: Core logic of the application divided into different packages.
-  - **api/**: API handling components.
-    - **handlers/**: API route handlers.
-    - **middleware/**: Middleware functions.
-    - **routes/**: Route definitions.
-  - **controllers/**: Business logic for each route.
-  - **database/**: Database-related code.
-    - **mongodb/**
-      - **models/**: Data models.
-      - **repository/**: Database operations.
-  - **utils/**: Utility functions.
-  - **app.go**: Application initialization and setup.
-
-- **docker/**: Docker-related files.
-  - **Dockerfile**: Instructions for building the application image.
-
-- **docker-compose.yaml**: Configuration for Docker Compose.
-
-- **config/**: Configuration files for the application.
-  - **app-config.yaml**: General application settings.
-  - **database-config.yaml**: Database connection details.
-
-- **tests/**: Directory for tests.
-  - **e2e/**: End-to-End tests.
-  - **unit/**: Unit tests.
-
-- **.gitignore**: Specifies files and directories to be ignored by Git.
+# Project Title
 
 ## Getting Started
 
-To begin working with the application, follow the instructions in the project documentation. Feel free to adjust the project structure as needed based on your preferences and evolving project requirements.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+- Docker
+- Go
+- MongoDB
+- Redis
+
+### Installation
+
+1. **Clone the project**
+
+   Use git to clone the project onto your local machine.
+
+   ```bash
+   git clone <project-url>
+
+   ```
+
+2. **Build and run the project with Docker Navigate to the root directory of the project in your terminal and run the following command to build and run the project with Docker.**
+
+- docker-compose up --build
+
+3. **Running the tests**
+
+- Make sure the Redis container is up and running in Docker.
+- Navigate to the root directory of the project in your terminal.
+- cd tests/e2e
+- go test -v
+
+4. **Running the project without Docker**
+
+- If you need to run the project without Docker, don’t forget to change the MongoDB host in the database_config.yaml file to localhost.
