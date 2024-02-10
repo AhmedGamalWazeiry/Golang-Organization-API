@@ -80,7 +80,7 @@ func VerifyToken(tokenString string) (*models.TokenClaims, error) {
 	token, err := ParseToken(tokenString)
 	
 	if err != nil {
-		return nil, err
+		return nil, errors.New("token validation failed")
 	}
     
 	claims, ok := token.Claims.(*models.TokenClaims)

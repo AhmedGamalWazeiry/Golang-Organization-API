@@ -9,13 +9,13 @@ import (
 	"org.com/org/pkg/utils"
 )
 
+// CreateOrganizationHandler handles the POST request for creating a new organization.
 func CreateOrganizationHandler(c *gin.Context) {
 	var organization models.OrganizationView
 
-	// Bind JSON data to the 'user' variable
-	if err := c.ShouldBindJSON(&organization); err != nil {
-		errorMessage := utils.ExtractErrorMessage(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessage})
+	statusCode, errorMessage := utils.BindAndValidate(c, &organization)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
     
@@ -31,57 +31,48 @@ func CreateOrganizationHandler(c *gin.Context) {
 	c.JSON(statusCode, gin.H{"organization_id": organizationID })
 }
 
+// GetOrganizationByIDHandler handles the GET request for retrieving an organization by its ID.
 func GetOrganizationByIDHandler(c *gin.Context) {
-	// Get the organization ID from the request
 	organizationID := c.Param("organization_id")
-
-	// Get the user ID from the request
 	userEmail, _ := c.Get("user_email")
 	userEmailString, _ := userEmail.(string)
 
-	// Pass this data to the controller
 	statusCode, organization, err := controllers.GetOrganizationByIDController(organizationID, userEmailString)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Return the organization data
 	c.JSON(statusCode, organization)
 }
 
+// GetAllUserOrganizationsHandler handles the GET request for retrieving all organizations a user is part of.
 func GetAllUserOrganizationsHandler(c *gin.Context) {
-	// Get the user ID from the request
 	userEmail, _ := c.Get("user_email")
 	userEmailString, _ := userEmail.(string)
 
-	// Pass this data to the controller
 	statusCode, organizations, err := controllers.GetAllUserOrganizationsController(userEmailString)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Return the organizations data
 	c.JSON(statusCode, organizations)
 }
 
+// UpdateOrganizationHandler handles the PUT request for updating an organization's information.
 func UpdateOrganizationHandler(c *gin.Context) {
-	// Get the organization ID from the request
 	organizationID := c.Param("organization_id")
-
-	// Get the user ID from the request
 	userEmail, _ := c.Get("user_email")
 	userEmailString, _ := userEmail.(string)
 
-	// Bind JSON data to the 'organization' variable
 	var organization models.OrganizationView
-	if err := c.ShouldBindJSON(&organization); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	statusCode, errorMessage := utils.BindAndValidate(c, &organization)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
 
-	// Pass this data to the controller
 	statusCode, err := controllers.UpdateOrganizationController(organizationID, userEmailString, organization)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
@@ -91,15 +82,12 @@ func UpdateOrganizationHandler(c *gin.Context) {
 	c.JSON(statusCode, gin.H{"organization_id": organizationID,"name": organization.Name,"description": organization.Description})
 }
 
+// DeleteOrganizationHandler handles the DELETE request for deleting an organization.
 func DeleteOrganizationHandler(c *gin.Context) {
-	// Get the organization ID from the request
 	organizationID := c.Param("organization_id")
-
-	// Get the user ID from the request
 	userEmail, _ := c.Get("user_email")
 	userEmailString, _ := userEmail.(string)
 
-	// Pass this data to the controller
 	statusCode, err := controllers.DeleteOrganizationController(organizationID, userEmailString)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
@@ -109,25 +97,20 @@ func DeleteOrganizationHandler(c *gin.Context) {
 	c.JSON(statusCode, gin.H{"status": "Organization deleted successfully"})
 }
 
+// InviteUserHandler handles the POST request for inviting a user to an organization.
 func InviteUserHandler(c *gin.Context) {
-	// Get the organization ID from the request
+	var invite models.Invite
 	organizationID := c.Param("organization_id")
-
-	// Get the user ID from the request
 	userID, _ := c.Get("user_id")
 	userIDString, _ := userID.(string)
 
-	// Bind JSON data to the 'invite' variable
-	var invite struct {
-		UserEmail string `json:"user_email"`
-	}
-	if err := c.ShouldBindJSON(&invite); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	statusCode, errorMessage := utils.BindAndValidate(c, &invite)
+	if statusCode != http.StatusOK {
+		c.JSON(statusCode, gin.H{"error": errorMessage})
 		return
 	}
 
-	// Pass this data to the controller
-	statusCode, err := controllers.InviteUserController(organizationID, userIDString, invite.UserEmail)
+	statusCode, err := controllers.InviteUserController(organizationID, userIDString, invite.Email)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
