@@ -12,11 +12,12 @@ import (
 
 var (
 	client     *mongo.Client
-	dbName     = "OrgDB"
+	dbName string
 )
 
 // InitDB initializes the MongoDB database connection.
-func InitDB() {
+func InitDB(dataBaseName string) {
+	dbName = dataBaseName
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -147,3 +148,28 @@ func createOrganizationsCollection(ctx context.Context) {
 }
 
 
+// DropDB drops the MongoDB database.
+func DropDB() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := client.Database(dbName).Drop(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Dropped the database!")
+}
+
+// DisconnectClient disconnects the MongoDB client.
+func DisconnectClient() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := client.Disconnect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Disconnected the client!")
+}

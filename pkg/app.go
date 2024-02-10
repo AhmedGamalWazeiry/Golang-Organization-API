@@ -19,7 +19,7 @@ func NewApp() *Application {
 	}
 
 	// Initialize database
-	mongodb.InitDB()
+	mongodb.InitDB("OrgDB")
 
 	utils.InitRedis()
 
